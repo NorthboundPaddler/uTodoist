@@ -31,6 +31,21 @@ nix develop
 
 If you aren't using Nix for your development machine, well...
 
+### Packaging in Nix 
+
+I'm still a bit new to this, so be mindful that this section is all trial and error. 
+
+First, prefetch the has using the following: 
+
+```sh
+nix-shell -p nix-prefetch-git
+nix-prefetch-git https://github.com/NorthboundPaddler/uTodoist
+```
+
+Then, copy the `hash` key's value from the resulting output to the `sha256` attribute in `default.nix`. Also, update the `rev` attribute with the latest release name. For example, it might look like `v0.1.0-alpha`.
+
+You can test if the project builds by running `nix build`. No idea though how to make the `utodoist` binary executable though... 
+
 ## Roadmap
 
 - [x] Write the beginnings of a README.md
