@@ -1,4 +1,4 @@
-# uTodoist
+# μTodoist
 
 This simple CLI tool is only useful for quick terminal usage or for a building block for other programs. If you're looking for something fully featured, look elsewhere!
 
