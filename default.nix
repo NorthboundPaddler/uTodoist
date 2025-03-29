@@ -7,8 +7,8 @@ pkgs.rustPlatform.buildRustPackage rec {
   src = pkgs.fetchFromGitHub {
     owner = "NorthboundPaddler";
     repo = "uTodoist";
-    rev = "v0.1.0-alpha";
-    sha256 = "sha256-YH5qD5m0CBDCq3dp32E69unO3MA8TrdNjTZu8o9tYRE=";
+    rev = "v0.1.1-alpha";
+    sha256 = "sha256-Ebhfbkx0017CPlsmrM70bOmjE6w66QAw254I7C8y9CI=";
   };
 
   cargoLock = {
