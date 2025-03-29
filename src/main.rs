@@ -105,7 +105,11 @@ fn list_tasks(
             let newline_str = build_description_newline(desc_str_value);
             let print_str = format!(
                 "({})[{}] {}{}{}",
-                id_str, priority_str, content_str, newline_str, desc_str
+                id_str,
+                priority_str,
+                content_str,
+                newline_str,
+                desc_str.italic()
             );
             println!("{}", print_str);
         }
