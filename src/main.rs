@@ -23,7 +23,7 @@ struct Args {
     /// Return output as JSON
     #[arg(global = true)]
     #[arg(short = 'j', long, action=ArgAction::SetFalse)]
-    json: Option<bool>,
+    json: bool,
 }
 
 #[derive(Subcommand)]
@@ -36,7 +36,7 @@ enum Commands {
 
         /// Show the task description
         #[arg(short = 'd', long,action=ArgAction::SetFalse)]
-        show_description: Option<bool>,
+        show_description: bool,
     },
 
     /// Add a task using Todoist's natural language processing
@@ -72,9 +72,17 @@ fn colorize_priority(priority: u8) -> colored::ColoredString {
     }
 }
 
+fn build_description_newline(desc_str: String) -> String {
+    if desc_str.is_empty() {
+        "".to_string()
+    } else {
+        "\n\t".to_string()
+    }
+}
+
 fn list_tasks(
     filter_string: &String,
-    show_description: bool,
+    show_description: &bool,
     api_key: String,
 ) -> Result<(), anyhow::Error> {
     let uri = build_task_query_uri(filter_string);
@@ -88,14 +96,16 @@ fn list_tasks(
         let priority_str = colorize_priority(t.priority);
         let id_str = t.id;
         let content_str = t.content.bold();
-        let desc_str = t.description.italic();
-        if show_description {
+        let desc_str = t.description;
+        if *show_description {
             let print_str = format!("({})[{}] {}", id_str, priority_str, content_str);
             println!("{}", print_str);
         } else {
+            let desc_str_value = desc_str.clone();
+            let newline_str = build_description_newline(desc_str_value);
             let print_str = format!(
-                "({})[{}] {}\n\t{}",
-                id_str, priority_str, content_str, desc_str
+                "({})[{}] {}{}{}",
+                id_str, priority_str, content_str, newline_str, desc_str
             );
             println!("{}", print_str);
         }
@@ -112,7 +122,7 @@ fn main() -> Result<(), anyhow::Error> {
             show_description,
         }) => list_tasks(
             filter,
-            show_description.is_some(),
+            show_description,
             cli.api_key.expect("API Key is required"),
         )?,
         Some(Commands::Add {}) => {}
