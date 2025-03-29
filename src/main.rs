@@ -89,7 +89,6 @@ fn list_tasks(
         let id_str = t.id;
         let content_str = t.content.bold();
         let desc_str = t.description.italic();
-        println!("{}", show_description);
         if show_description {
             let print_str = format!("({})[{}] {}", id_str, priority_str, content_str);
             println!("{}", print_str);
