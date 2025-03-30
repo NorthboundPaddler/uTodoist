@@ -1,10 +1,11 @@
-use std::u8;
+use std::{collections::HashMap, u8};
 
 use clap::{ArgAction, Parser, Subcommand};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
 const GET_ACTIVE_TASKS_URL: &str = "https://api.todoist.com/rest/v2/tasks";
+const QUICK_ADD_ITEM_URL: &str = "https://api.todoist.com/sync/v9/quick/add";
 
 // Take in command line arguments for filter and API key (this specifically is for the list tasks
 // request). Will need to break this out when getting to "add" and "complete" tools for the cli.
@@ -40,7 +41,11 @@ enum Commands {
     },
 
     /// Add a task using Todoist's natural language processing
-    Add {},
+    Add {
+        /// Text content to be processed
+        #[arg(short = 't', long)]
+        text: String,
+    },
 
     /// Complete a task by it's ID
     Complete {},
@@ -56,6 +61,11 @@ struct Task {
     description: String,
     id: String,
     priority: u8,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct QuickAdd {
+    id: String,
 }
 
 fn colorize_priority(priority: u8) -> colored::ColoredString {
@@ -124,6 +134,25 @@ fn list_tasks(
     }
 }
 
+fn quick_add_item(text: &String, api_key: String, json: bool) -> Result<(), anyhow::Error> {
+    let uri = QUICK_ADD_ITEM_URL; //build_quick_add_item_uri(text);
+    let mut params = HashMap::new();
+    params.insert("text", text);
+    let res = reqwest::blocking::Client::new()
+        .post(uri)
+        .bearer_auth(api_key)
+        .form(&params)
+        .send()?;
+    //println!("{:?}", res.text());
+    if json {
+        println!("{}", res.text()?);
+    } else {
+        let res_json = res.json::<QuickAdd>()?;
+        println!("{}", res_json.id);
+    }
+    Ok(())
+}
+
 fn main() -> Result<(), anyhow::Error> {
     let cli = Args::parse();
     //TODO throw error/exit if no API key is given
@@ -137,7 +166,9 @@ fn main() -> Result<(), anyhow::Error> {
             cli.api_key.expect("API Key is required"),
             cli.json,
         )?,
-        Some(Commands::Add {}) => {}
+        Some(Commands::Add { text }) => {
+            quick_add_item(text, cli.api_key.expect("API Key is required"), cli.json)?
+        }
         Some(Commands::Complete {}) => {}
         &None => {
             todo!();
