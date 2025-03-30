@@ -2,7 +2,7 @@ use std::u8;
 
 use clap::{ArgAction, Parser, Subcommand};
 use colored::Colorize;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 const GET_ACTIVE_TASKS_URL: &str = "https://api.todoist.com/rest/v2/tasks";
 
@@ -22,7 +22,7 @@ struct Args {
 
     /// Return output as JSON
     #[arg(global = true)]
-    #[arg(short = 'j', long, action=ArgAction::SetFalse)]
+    #[arg(short = 'j', long, action=ArgAction::SetTrue)]
     json: bool,
 }
 
@@ -35,7 +35,7 @@ enum Commands {
         filter: String,
 
         /// Show the task description
-        #[arg(short = 'd', long,action=ArgAction::SetFalse)]
+        #[arg(short = 'd', long,action=ArgAction::SetTrue)]
         show_description: bool,
     },
 
@@ -50,7 +50,7 @@ fn build_task_query_uri(filter: &String) -> String {
     format!("{}?filter={}", GET_ACTIVE_TASKS_URL, filter)
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 struct Task {
     content: String,
     description: String,
@@ -84,6 +84,7 @@ fn list_tasks(
     filter_string: &String,
     show_description: &bool,
     api_key: String,
+    json: bool,
 ) -> Result<(), anyhow::Error> {
     let uri = build_task_query_uri(filter_string);
     let res = reqwest::blocking::Client::new()
@@ -92,29 +93,35 @@ fn list_tasks(
         .send()?;
     let res_json = res.json::<Vec<Task>>()?;
     //println!("{:?}", res_json);
-    for t in res_json {
-        let priority_str = colorize_priority(t.priority);
-        let id_str = t.id;
-        let content_str = t.content.bold();
-        let desc_str = t.description;
-        if *show_description {
-            let print_str = format!("({})[{}] {}", id_str, priority_str, content_str);
-            println!("{}", print_str);
-        } else {
-            let desc_str_value = desc_str.clone();
-            let newline_str = build_description_newline(desc_str_value);
-            let print_str = format!(
-                "({})[{}] {}{}{}",
-                id_str,
-                priority_str,
-                content_str,
-                newline_str,
-                desc_str.italic()
-            );
-            println!("{}", print_str);
+    if json {
+        let json_str = serde_json::to_string(&res_json)?;
+        println!("{}", json_str);
+        Ok(())
+    } else {
+        for t in res_json {
+            let priority_str = colorize_priority(t.priority);
+            let id_str = t.id;
+            let content_str = t.content.bold();
+            let desc_str = t.description;
+            if *show_description {
+                let print_str = format!("({})[{}] {}", id_str, priority_str, content_str);
+                println!("{}", print_str);
+            } else {
+                let desc_str_value = desc_str.clone();
+                let newline_str = build_description_newline(desc_str_value);
+                let print_str = format!(
+                    "({})[{}] {}{}{}",
+                    id_str,
+                    priority_str,
+                    content_str,
+                    newline_str,
+                    desc_str.italic()
+                );
+                println!("{}", print_str);
+            }
         }
+        Ok(())
     }
-    Ok(())
 }
 
 fn main() -> Result<(), anyhow::Error> {
@@ -128,6 +135,7 @@ fn main() -> Result<(), anyhow::Error> {
             filter,
             show_description,
             cli.api_key.expect("API Key is required"),
+            cli.json,
         )?,
         Some(Commands::Add {}) => {}
         Some(Commands::Complete {}) => {}
