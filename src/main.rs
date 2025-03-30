@@ -104,9 +104,6 @@ fn list_tasks(
             let content_str = t.content.bold();
             let desc_str = t.description;
             if *show_description {
-                let print_str = format!("({})[{}] {}", id_str, priority_str, content_str);
-                println!("{}", print_str);
-            } else {
                 let desc_str_value = desc_str.clone();
                 let newline_str = build_description_newline(desc_str_value);
                 let print_str = format!(
@@ -117,6 +114,9 @@ fn list_tasks(
                     newline_str,
                     desc_str.italic()
                 );
+                println!("{}", print_str);
+            } else {
+                let print_str = format!("({})[{}] {}", id_str, priority_str, content_str);
                 println!("{}", print_str);
             }
         }
