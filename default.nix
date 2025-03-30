@@ -8,7 +8,7 @@ pkgs.rustPlatform.buildRustPackage rec {
     owner = "NorthboundPaddler";
     repo = "uTodoist";
     rev = "v0.1.2-alpha";
-    sha256 = "sha256-+d6j3DxesSHG/Ng3N6T6SJNoeSSi75aRDXvaq0uxMFQ=";
+    sha256 = "sha256-4AZU94WAHihJkXBDUKWf+29NWz5K+O1v4tI8fl0MYcU=";
   };
 
   cargoLock = {
