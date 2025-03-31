@@ -3,7 +3,7 @@ use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, u8};
 
-const GET_ACTIVE_TASKS_URL: &str = "https://api.todoist.com/rest/v2/tasks";
+const REST_API_TASK_URL: &str = "https://api.todoist.com/rest/v2/tasks";
 const QUICK_ADD_ITEM_URL: &str = "https://api.todoist.com/sync/v9/quick/add";
 
 #[derive(Parser)]
@@ -45,7 +45,11 @@ enum Commands {
     },
 
     /// Complete a task by it's ID
-    Complete {},
+    Complete {
+        /// ID of the task to Complete
+        #[arg(short = 'i', long)]
+        id: u64,
+    },
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -89,7 +93,7 @@ fn list_tasks(
     api_key: String,
     json: bool,
 ) -> Result<(), anyhow::Error> {
-    let uri = format!("{}?filter={}", GET_ACTIVE_TASKS_URL, filter_string);
+    let uri = format!("{}?filter={}", REST_API_TASK_URL, filter_string);
     let res = reqwest::blocking::Client::new()
         .get(uri)
         .bearer_auth(api_key)
@@ -143,6 +147,16 @@ fn quick_add_item(text: &String, api_key: String, json: bool) -> Result<(), anyh
     Ok(())
 }
 
+fn close_task(id: &u64, api_key: String) -> Result<(), anyhow::Error> {
+    let uri = format!("{}/{}/close", REST_API_TASK_URL, id);
+    let res = reqwest::blocking::Client::new()
+        .post(uri)
+        .bearer_auth(api_key)
+        .send()?;
+    assert_eq!(res.status().as_u16(), 204); // API returns no content on success
+    Ok(())
+}
+
 fn main() -> Result<(), anyhow::Error> {
     let cli = Args::parse();
     //TODO throw error/exit if no API key is given
@@ -159,7 +173,9 @@ fn main() -> Result<(), anyhow::Error> {
         Some(Commands::Add { text }) => {
             quick_add_item(text, cli.api_key.expect("API Key is required"), cli.json)?
         }
-        Some(Commands::Complete {}) => {}
+        Some(Commands::Complete { id }) => {
+            close_task(id, cli.api_key.expect("API Key is required"))?
+        }
         &None => {
             todo!();
         }
