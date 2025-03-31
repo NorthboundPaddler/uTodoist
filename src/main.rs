@@ -1,18 +1,15 @@
-use std::{collections::HashMap, u8};
-
 use clap::{ArgAction, Parser, Subcommand};
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, u8};
 
 const GET_ACTIVE_TASKS_URL: &str = "https://api.todoist.com/rest/v2/tasks";
 const QUICK_ADD_ITEM_URL: &str = "https://api.todoist.com/sync/v9/quick/add";
 
-// Take in command line arguments for filter and API key (this specifically is for the list tasks
-// request). Will need to break this out when getting to "add" and "complete" tools for the cli.
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    // The command to use (List, Add, Complete)
+    // The subcommand to use (List, Add, Complete)
     #[command(subcommand)]
     command: Option<Commands>,
 
@@ -49,10 +46,6 @@ enum Commands {
 
     /// Complete a task by it's ID
     Complete {},
-}
-
-fn build_task_query_uri(filter: &String) -> String {
-    format!("{}?filter={}", GET_ACTIVE_TASKS_URL, filter)
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -96,18 +89,16 @@ fn list_tasks(
     api_key: String,
     json: bool,
 ) -> Result<(), anyhow::Error> {
-    let uri = build_task_query_uri(filter_string);
+    let uri = format!("{}?filter={}", GET_ACTIVE_TASKS_URL, filter_string);
     let res = reqwest::blocking::Client::new()
         .get(uri)
         .bearer_auth(api_key)
         .send()?;
-    let res_json = res.json::<Vec<Task>>()?;
-    //println!("{:?}", res_json);
     if json {
-        let json_str = serde_json::to_string(&res_json)?;
-        println!("{}", json_str);
+        println!("{}", res.text()?);
         Ok(())
     } else {
+        let res_json = res.json::<Vec<Task>>()?;
         for t in res_json {
             let priority_str = colorize_priority(t.priority);
             let id_str = t.id;
@@ -135,7 +126,7 @@ fn list_tasks(
 }
 
 fn quick_add_item(text: &String, api_key: String, json: bool) -> Result<(), anyhow::Error> {
-    let uri = QUICK_ADD_ITEM_URL; //build_quick_add_item_uri(text);
+    let uri = QUICK_ADD_ITEM_URL;
     let mut params = HashMap::new();
     params.insert("text", text);
     let res = reqwest::blocking::Client::new()
@@ -143,7 +134,6 @@ fn quick_add_item(text: &String, api_key: String, json: bool) -> Result<(), anyh
         .bearer_auth(api_key)
         .form(&params)
         .send()?;
-    //println!("{:?}", res.text());
     if json {
         println!("{}", res.text()?);
     } else {
