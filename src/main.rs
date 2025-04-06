@@ -90,7 +90,7 @@ fn build_description_newline(desc_str: String) -> String {
 fn list_tasks(
     filter_string: &String,
     show_description: &bool,
-    api_key: String,
+    api_key: &String,
     json: bool,
 ) -> Result<(), anyhow::Error> {
     let uri = format!("{}?filter={}", REST_API_TASK_URL, filter_string);
@@ -129,7 +129,7 @@ fn list_tasks(
     }
 }
 
-fn quick_add_item(text: &String, api_key: String, json: bool) -> Result<(), anyhow::Error> {
+fn quick_add_item(text: &String, api_key: &String, json: bool) -> Result<(), anyhow::Error> {
     let uri = QUICK_ADD_ITEM_URL;
     let mut params = HashMap::new();
     params.insert("text", text);
@@ -147,7 +147,7 @@ fn quick_add_item(text: &String, api_key: String, json: bool) -> Result<(), anyh
     Ok(())
 }
 
-fn close_task(id: &u64, api_key: String) -> Result<(), anyhow::Error> {
+fn close_task(id: &u64, api_key: &String) -> Result<(), anyhow::Error> {
     let uri = format!("{}/{}/close", REST_API_TASK_URL, id);
     let res = reqwest::blocking::Client::new()
         .post(uri)
@@ -157,29 +157,32 @@ fn close_task(id: &u64, api_key: String) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-fn main() -> Result<(), anyhow::Error> {
+fn run() -> Result<(), anyhow::Error> {
     let cli = Args::parse();
     //TODO throw error/exit if no API key is given
+    let api_key = &cli.api_key.expect("API Key is required!");
     match &cli.command {
         Some(Commands::List {
             filter,
             show_description,
-        }) => list_tasks(
-            filter,
-            show_description,
-            cli.api_key.expect("API Key is required"),
-            cli.json,
-        )?,
-        Some(Commands::Add { text }) => {
-            quick_add_item(text, cli.api_key.expect("API Key is required"), cli.json)?
-        }
-        Some(Commands::Complete { id }) => {
-            close_task(id, cli.api_key.expect("API Key is required"))?
-        }
+        }) => list_tasks(filter, show_description, api_key, cli.json)?,
+        Some(Commands::Add { text }) => quick_add_item(text, api_key, cli.json)?,
+        Some(Commands::Complete { id }) => close_task(id, api_key)?,
         &None => {
-            todo!();
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "No subcommand was given",
+            )
+            .into());
         }
     }
 
     Ok(())
+}
+
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("{}{}", "error: ".red().bold(), e);
+        std::process::exit(1)
+    }
 }
