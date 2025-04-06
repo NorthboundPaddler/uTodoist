@@ -2,6 +2,8 @@
 
 A simple CLI tool written in Rust to quickly interact with Todoist using their official API.
 
+![uTodoist list screenshot example](screenshots/uTodoist_list_example.png)
+
 At it's core, `utodoist` will only query tasks with a filter, add tasks using NLP, and complete tasks by ID. All of this is done via a simple CLI, and there's nothing else to it.
 
 At this time, this program is targetting the Todoist official REST API `v2` and the Sync API `v9`.
