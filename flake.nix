@@ -36,13 +36,13 @@
         pkgs.rustPlatform.buildRustPackage
           rec {
             pname = "uTodoist";
-            version = "0.2.0";
+            version = "0.2.1";
 
             src = pkgs.fetchFromGitHub {
               owner = "NorthboundPaddler";
               repo = "uTodoist";
-              rev = "v0.2.0-alpha";
-              sha256 = "sha256-tBcmNI9Jb9H4OV5eLjBBe1E9Mo1aqRy/v1pWSG7BbIg=";
+              rev = "v0.2.1-alpha";
+              sha256 = "sha256-BTXqq4MaKqp5eIuamAathKil9mvwKa1nrnPGftbq59M=";
             };
 
             cargoLock = {
